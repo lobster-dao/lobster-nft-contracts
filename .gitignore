@@ -1,0 +1,11 @@
+/node_modules/
+/build/
+/cache
+/coverage
+/coverage-remote
+/artifacts
+/data
+
+coverage.json
+.idea
+*.log
