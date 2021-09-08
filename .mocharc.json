@@ -1,0 +1,8 @@
+{
+  "delay": false,
+  "exit": true,
+  "extension": ["js"],
+  "recursive": true,
+  "require": ["hardhat/register"],
+  "timeout": 50000
+}
