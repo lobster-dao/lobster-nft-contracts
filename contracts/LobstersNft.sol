@@ -11,16 +11,26 @@ import "./traits/LobstersNames.sol";
 import "./interfaces/ILobstersNft.sol";
 
 contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
+  using SafeMath for uint256;
+  /// bytes4(keccak256("royaltyInfo(uint256,uint256)")) == 0x2a55205a
+  bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+
   event SetBaseURI(string indexed baseURI);
   event SetDefaultURI(string indexed defaultURI);
   event SetMinter(address minter);
   event SetChainlinkConfig(uint256 chainlinkFee, bytes32 chainlinkHash);
   event SetRandomSeed(uint256 seed, bytes32 requestId);
+  event SetRoyalties(uint256 indexed newRoyaltyRate, uint256 newScalingFactor);
 
   string public defaultURI;
 
   address public minter;
   uint256 public maxTokens;
+  // royalty rate is the percent of each secondary market trade sent to the DAO
+  uint256 public royaltyRate;
+  // scale factor is how much the royalty rate should be divided by when calculating
+  // royalty fees (eg 75 would need to be scaled by 1e3 to become 7.5%)
+  uint256 public scaleFactor;
   uint256 public seed;
 
   uint256 public chainlinkFee;
@@ -43,6 +53,9 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
     maxTokens = _maxTokens;
     chainlinkFee = _chainlinkFee;
     chainlinkHash = _chainlinkHash;
+    _registerInterface(_INTERFACE_ID_ERC2981);
+    royaltyRate = 75;
+    scaleFactor = 1000;
   }
 
   function mint(address _to) external override onlyMinter returns (uint256 id) {
@@ -70,6 +83,16 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
     chainlinkFee = _chainlinkFee;
     chainlinkHash = _chainlinkHash;
     emit SetChainlinkConfig(_chainlinkFee, _chainlinkHash);
+  }
+  /// @notice Allows the setting of a new royalty rate and scaling factor
+  /// @dev Scaling factor should be implemented with a target token in mind, since the 
+  /// decimals of the token will affect how big the scaling factor should be
+  /// @param _newRate the new percentage of royalties (contract defaults to 75)
+  /// @param _newScale the new scaling factor (default: 1e3 to make 75 equal to 7.5%)
+  function setRoyaltyRate(uint256 _newRate, uint256 _newScale) external onlyOwner {
+    royaltyRate = _newRate;
+    scaleFactor = _newScale;
+    emit SetRoyalties(_newRate, _newScale);
   }
 
   function seedReveal() public onlyOwner {
@@ -114,6 +137,18 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
     }
 
     return randomIds[_tokenId].toString();
+  }
+
+  /// @notice Given a tokenId and sale amount, returns the amount to be paid in royalties
+  /// @dev The returned figure is a raw uint256 and needs to be scaled by the amount of token decimals
+  /// @param _tokenId the token id of the NFT the query is being made for
+  /// @param _salePrice the token amount being offered for the NFT
+  /// @return the address for the royalties to be sent to and the amount to be paid in royalties
+  function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public view returns(address, uint256) {
+    require(_exists(_tokenId), "tokenId does not exist");
+
+    uint256 royaltyAmount = _salePrice.mul(royaltyRate).div(scaleFactor);
+    return (owner(), royaltyAmount);
   }
 
   function fulfillRandomness(bytes32 _requestId, uint256 _randomNumber) internal override {

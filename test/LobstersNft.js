@@ -402,4 +402,40 @@ describe('LobstersNft', () => {
       assert.equal(addBN(feeReceiverBalance, feeBalance), await web3.eth.getBalance(feeReceiver).then(b => b.toString(10)));
     });
   });
+
+  describe.only("royalties", () => {
+    let treeArr, treeRoot;
+    beforeEach(async () => {
+      lobstersNft = await LobstersNft.new(
+        'LOBSTERS',
+        'LOBSTERS',
+        '6',
+        linkToken.address,
+        chainLinkCoordinator.address,
+        linkFeeAmount,
+        '0x'
+      );
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x');
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
+
+      treeArr = [{address: alice, count: 1}];
+      treeRoot = treeHelper.getTreeRoot(treeArr);
+      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+      const aliceProof = treeHelper.getTreeLeafProof(treeArr, alice);
+      await lobsterMinter.claim(alice, '1', aliceProof);
+    });
+
+    it("royalties calculate properly", async () => {
+      const salePrice = ethers.utils.parseEther("1");
+      const owner = await lobstersNft.owner();
+      const royaltyInfo = await lobstersNft.royaltyInfo(0, salePrice);
+      const expectedRoyalties = ethers.utils.parseUnits("75", 15);
+      assert.equal(ethers.BigNumber.from(royaltyInfo[1]), expectedRoyalties);
+      assert.equal(royaltyInfo[0], owner);
+
+      await expectRevert(lobstersNft.royaltyInfo(1, salePrice), "tokenId does not exist");
+    });
+
+    it("royalties and scale factor can be set by owner");
+  })
 });
