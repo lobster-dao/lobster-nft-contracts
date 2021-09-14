@@ -47,9 +47,7 @@ contract LobstersMinter is Ownable {
     require(verifyClaim(_account, _count, _merkleProof), "INVALID_MERKLE_PROOF");
 
     claimed[_account] = true;
-    for (uint256 i = 0; i < _count; i++) {
-      lobstersNft.mint(_account);
-    }
+    lobstersNft.mintMultiple(_account, _count);
     emit Claim(_account, _count);
   }
 }
