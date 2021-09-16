@@ -6,7 +6,7 @@
   "scripts": {
     "build": "yarn run compile && yarn run typechain",
     "clean": "hardhat clean",
-    "compile": "COMPILE_TARGET=release hardhat compile",
+    "compile": "npm run clean && COMPILE_TARGET=release hardhat compile",
     "coverage": "hardhat coverage --show-stack-traces --solcoverjs ./.solcover.js --network coverage --temp artifacts --testfiles \"./test/**/*.js\"",
     "lint:sol": "solhint --config ./.solhint.json \"contracts/**/*.sol\"",
     "lint:js": "eslint --config .eslintrc.json --ignore-path ./.eslintignore --ext .js .",

@@ -34,8 +34,8 @@ const config = {
     hardhat: {
       chainId: 31337,
       allowUnlimitedContractSize: true,
-      gas: 12000000,
-      blockGasLimit: 12000000
+      gas: 30000000,
+      blockGasLimit: 30000000
     },
     ganache: {
       url: 'http://127.0.0.1:8945',
@@ -75,7 +75,7 @@ const config = {
     coverage: './coverage',
     coverageJson: './coverage.json',
     root: './',
-    sources: './contracts',
+    sources: process.env.SOURCES ? './' + process.env.SOURCES : './contracts',
     tests: './test',
   },
   solidity: {

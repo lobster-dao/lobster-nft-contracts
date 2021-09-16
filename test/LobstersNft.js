@@ -1,7 +1,6 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
 const treeHelper = require('../helpers/tree');
 const ethers = require('ethers');
-const pIteration = require('p-iteration');
 const assert = require('chai').assert;
 const MockChainlinkCoordinator = artifacts.require('MockChainlinkCoordinator');
 const MockERC20 = artifacts.require('MockERC20');
@@ -243,9 +242,11 @@ describe('LobstersNft', () => {
     });
   });
 
-  describe('random metadataOf', () => {
+  describe('random metadataOf', function() {
+    this.timeout(1000000);
+
     const countPerMember = 50;
-    const members = 10;
+    const members = 180;
 
     let treeArr, treeRoot;
 
@@ -272,15 +273,11 @@ describe('LobstersNft', () => {
       treeRoot = treeHelper.getTreeRoot(treeArr);
       await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
 
-      await pIteration.forEach(addresses, address => {
-        return lobsterMinter.claim(address, countPerMember.toString(), treeHelper.getTreeLeafProof(treeArr, address));
-      });
+      await lobsterMinter.claim(addresses[0], countPerMember.toString(), treeHelper.getTreeLeafProof(treeArr, addresses[0]));
     });
 
     it('seed with metadata should work properly', async function() {
-      this.timeout(1000000)
-
-      assert.equal(await lobstersNft.totalSupply(), (countPerMember * members).toString());
+      assert.equal(await lobstersNft.maxTokens(), (countPerMember * members).toString());
 
       await linkToken.transfer(lobstersNft.address, linkFeeAmount);
 
@@ -289,25 +286,11 @@ describe('LobstersNft', () => {
       await chainLinkCoordinator.sendRandom(lobstersNft.address, randomId);
       assert.equal(await lobstersNft.seed(), randomId);
 
-      const metadataId = {};
       const maxMetadaId = countPerMember * members - 1;
-      let maxResultMetadataId = null;
-      for (let i = 0; i < countPerMember; i++) {
-        const idPromises = [];
-        for (let j = 0; j < members; j++) {
-          const tokenId = j + 10 * i;
-          idPromises.push(lobstersNft.metadataOf(tokenId.toString()))
-        }
-        const ids = await Promise.all(idPromises).then(arr => arr.map(id => parseInt(id)));
-        ids.forEach(id => {
-          assert.equal(metadataId[id], undefined);
-          metadataId[id] = true;
-          if (id > maxResultMetadataId) {
-            maxResultMetadataId = id;
-          }
-        })
+      for (let i = 0; i < 5; i++) {
+        const metadataId = parseInt(await lobstersNft.metadataOf(i.toString()));
+        assert.equal(metadataId <= maxMetadaId, true);
       }
-      assert.equal(maxResultMetadataId, maxMetadaId);
     });
   });
 
