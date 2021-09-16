@@ -13,7 +13,7 @@ import "./interfaces/ILobstersNft.sol";
 contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
   event SetBaseURI(string indexed baseURI);
   event SetDefaultURI(string indexed defaultURI);
-  event SetMinter(address minter);
+  event SetMinter(address indexed minter);
   event SetChainlinkConfig(uint256 chainlinkFee, bytes32 chainlinkHash);
   event SetRandomSeed(uint256 seed, bytes32 requestId);
 
@@ -52,7 +52,7 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
     }
   }
 
-  function mint(address _to) public override onlyMinter returns (uint256 id) {
+  function mint(address _to) external override onlyMinter {
     require(totalSupply() < maxTokens, "MAX_TOKENS");
     id = totalSupply();
     _mint(_to, id);
@@ -127,6 +127,7 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
 
   function fulfillRandomness(bytes32 _requestId, uint256 _randomNumber) internal override {
     require(seed == 0, "SEED_ALREADY_GENERATED");
+    finalBaseURI = true;
     seed = _randomNumber;
     emit SetRandomSeed(_randomNumber, _requestId);
   }
