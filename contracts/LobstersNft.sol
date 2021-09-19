@@ -5,12 +5,12 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
-import "./traits/LobstersNames.sol";
 import "./interfaces/ILobstersNft.sol";
 
-contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
+contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
   event SetBaseURI(string indexed baseURI);
   event SetDefaultURI(string indexed defaultURI);
   event SetMinter(address minter);
@@ -85,10 +85,6 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
     require(seed == 0, "SEED_ALREADY_GENERATED");
     require(LINK.balanceOf(address(this)) >= chainlinkFee, "LINK_BALANCE_NOT_ENOUGH");
     requestRandomness(chainlinkHash, chainlinkFee);
-  }
-
-  function getLobsterOwner(uint256 _tokenId) public view override returns (address) {
-    return ownerOf(_tokenId);
   }
 
   function tokenURI(uint256 tokenId) public view override returns (string memory) {

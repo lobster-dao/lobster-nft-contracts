@@ -294,7 +294,7 @@ describe('LobstersNft', () => {
     });
   });
 
-  describe('names claiming', () => {
+  describe.skip('names claiming', () => {
     let treeArr, treeRoot;
     beforeEach(async () => {
       lobstersNft = await LobstersNft.new(
