@@ -1,18 +1,21 @@
 pragma solidity 0.6.12;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ILobstersNft.sol";
 
 contract LobstersMinter is Ownable {
-  event Claim(address indexed account, uint256 count);
+  using SafeMath for uint256;
+
+  event Claim(address indexed account, uint256 count, uint256 mintCount);
   event UpdateMerkleRoot(bytes32 merkleRoot);
 
   ILobstersNft public lobstersNft;
   bytes32 public merkleRoot;
 
-  mapping(address => bool) public claimed;
+  mapping(address => uint256) public claimedCount;
 
   constructor(address _lobstersNft, bytes32 _merkleRoot) public {
     lobstersNft = ILobstersNft(_lobstersNft);
@@ -40,14 +43,16 @@ contract LobstersMinter is Ownable {
   function claim(
     address _account,
     uint256 _count,
+    uint256 _mintCount,
     bytes32[] calldata _merkleProof
   ) external {
-    require(!claimed[_account], "ALREADY_CLAIMED");
-
     require(verifyClaim(_account, _count, _merkleProof), "INVALID_MERKLE_PROOF");
 
-    claimed[_account] = true;
-    lobstersNft.mintMultiple(_account, _count);
-    emit Claim(_account, _count);
+    claimedCount[_account] = claimedCount[_account].add(_mintCount);
+
+    require(claimedCount[_account] <= _count, "MINT_COUNT_REACHED");
+
+    lobstersNft.mintMultiple(_account, _mintCount);
+    emit Claim(_account, _count, _mintCount);
   }
 }
