@@ -117,8 +117,8 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
       randomIds[i] = i;
     }
 
-    for (uint256 i = 0; i < maxTokens - 1; i++) {
-      uint256 j = (uint256(keccak256(abi.encode(seed_, i))) % (maxTokens - 5)) + 5;
+    for (uint256 i = 5; i < maxTokens - 1; i++) {
+      uint256 j = i + (uint256(keccak256(abi.encode(seed_, i))) % (maxTokens - i));
       (randomIds[i], randomIds[j]) = (randomIds[j], randomIds[i]);
     }
 
