@@ -127,7 +127,6 @@ contract LobstersNft is ILobstersNft, LobstersNames, ERC721, VRFConsumerBase {
 
   function fulfillRandomness(bytes32 _requestId, uint256 _randomNumber) internal override {
     require(seed == 0, "SEED_ALREADY_GENERATED");
-    finalBaseURI = true;
     seed = _randomNumber;
     emit SetRandomSeed(_randomNumber, _requestId);
   }
