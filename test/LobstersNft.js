@@ -4,6 +4,7 @@ const ethers = require('ethers');
 const assert = require('chai').assert;
 const MockChainlinkCoordinator = artifacts.require('MockChainlinkCoordinator');
 const MockERC20 = artifacts.require('MockERC20');
+const MockERC721 = artifacts.require('MockERC721');
 const LobstersNft = artifacts.require('LobstersNft');
 const LobstersMinter = artifacts.require('LobstersMinter');
 
@@ -43,7 +44,7 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x');
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
       await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 1}, {address: bob, count: 2}, {address: dan, count: 3}];
@@ -67,19 +68,19 @@ describe('LobstersNft', () => {
       assert.equal(treeHelper.verify(treeArr, treeRoot, treeHelper.getHexNode(treeArr, bob), aliceProof), false);
       assert.equal(treeHelper.verify(treeArr, treeRoot, treeHelper.getHexNode(treeArr, alice), aliceProof), true);
 
-      await expectRevert(lobsterMinter.claim(alice, '1', bobProof), 'INVALID_MERKLE_PROOF');
-      await expectRevert(lobsterMinter.claim(bob, '1', aliceProof), 'INVALID_MERKLE_PROOF');
-      await expectRevert(lobsterMinter.claim(alice, '2', aliceProof), 'INVALID_MERKLE_PROOF');
-      await expectRevert(lobsterMinter.claim(alice, '11', aliceProof), 'INVALID_MERKLE_PROOF');
-      await lobsterMinter.claim(alice, '1', aliceProof);
+      await expectRevert(lobsterMinter.claim(alice, '1', '1', bobProof), 'INVALID_MERKLE_PROOF');
+      await expectRevert(lobsterMinter.claim(bob, '1', '1', aliceProof), 'INVALID_MERKLE_PROOF');
+      await expectRevert(lobsterMinter.claim(alice, '2', '2', aliceProof), 'INVALID_MERKLE_PROOF');
+      await expectRevert(lobsterMinter.claim(alice, '11', '11', aliceProof), 'INVALID_MERKLE_PROOF');
+      await lobsterMinter.claim(alice, '1', '1', aliceProof);
 
       assert.equal('1', await lobstersNft.balanceOf(alice));
       assert.equal('1', await lobstersNft.totalSupply());
       assert.equal(alice, await lobstersNft.ownerOf('0'));
 
-      await expectRevert(lobsterMinter.claim(alice, '1', aliceProof), 'ALREADY_CLAIMED');
+      await expectRevert(lobsterMinter.claim(alice, '1', '1', aliceProof), 'MINT_COUNT_REACHED');
 
-      await lobsterMinter.claim(bob, '2', bobProof);
+      await lobsterMinter.claim(bob, '2', '2', bobProof);
 
       assert.equal('1', await lobstersNft.balanceOf(alice));
       assert.equal('2', await lobstersNft.balanceOf(bob));
@@ -89,7 +90,7 @@ describe('LobstersNft', () => {
       assert.equal(bob, await lobstersNft.ownerOf('2'));
 
       const danProof = treeHelper.getTreeLeafProof(treeArr, dan);
-      await lobsterMinter.claim(dan, '3', danProof);
+      await lobsterMinter.claim(dan, '3', '3', danProof);
 
       assert.equal('1', await lobstersNft.balanceOf(alice));
       assert.equal('2', await lobstersNft.balanceOf(bob));
@@ -122,7 +123,7 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x');
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
       await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 10}, {address: bob, count: 20}, {address: dan, count: 30}];
@@ -133,9 +134,9 @@ describe('LobstersNft', () => {
       const bobProof = treeHelper.getTreeLeafProof(treeArr, bob);
       const danProof = treeHelper.getTreeLeafProof(treeArr, dan);
 
-      await lobsterMinter.claim(alice, '10', aliceProof);
-      await lobsterMinter.claim(bob, '20', bobProof);
-      await lobsterMinter.claim(dan, '30', danProof);
+      await lobsterMinter.claim(alice, '10', '10', aliceProof);
+      await lobsterMinter.claim(bob, '20', '20', bobProof);
+      await lobsterMinter.claim(dan, '30', '30', danProof);
     });
 
     it('seed with metadata should work properly', async () => {
@@ -242,6 +243,150 @@ describe('LobstersNft', () => {
     });
   });
 
+  describe('partial mint', () => {
+    let treeArr, treeRoot;
+    beforeEach(async () => {
+      lobstersNft = await LobstersNft.new(
+        'LOBSTERS',
+        'LOBSTERS',
+        '610',
+        linkToken.address,
+        chainLinkCoordinator.address,
+        linkFeeAmount,
+        '0x'
+      );
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
+
+      treeArr = [{address: alice, count: 560}, {address: bob, count: 20}, {address: dan, count: 30}];
+      treeRoot = treeHelper.getTreeRoot(treeArr);
+      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+    });
+
+    it('other seed with metadata should work properly', async () => {
+      const aliceProof = treeHelper.getTreeLeafProof(treeArr, alice);
+      const bobProof = treeHelper.getTreeLeafProof(treeArr, bob);
+      const danProof = treeHelper.getTreeLeafProof(treeArr, dan);
+
+      await lobsterMinter.claim(alice, '560', '100', aliceProof);
+      await lobsterMinter.claim(alice, '560', '100', aliceProof);
+      await lobsterMinter.claim(alice, '560', '100', aliceProof);
+      await lobsterMinter.claim(alice, '560', '100', aliceProof);
+      await lobsterMinter.claim(alice, '560', '100', aliceProof);
+
+      await expectRevert(lobsterMinter.claim(alice, '560', '100', aliceProof), 'MINT_COUNT_REACHED');
+
+      await lobsterMinter.claim(alice, '560', '60', aliceProof);
+      await expectRevert(lobsterMinter.claim(alice, '560', '60', aliceProof), 'MINT_COUNT_REACHED');
+      await expectRevert(lobsterMinter.claim(alice, '560', '1', aliceProof), 'MINT_COUNT_REACHED');
+      await expectRevert(lobsterMinter.claim(alice, '560', '560', aliceProof), 'MINT_COUNT_REACHED');
+
+      await expectRevert(lobsterMinter.claim(bob, '20', '30', bobProof), 'MINT_COUNT_REACHED');
+      await lobsterMinter.claim(bob, '20', '10', bobProof);
+      await expectRevert(lobsterMinter.claim(bob, '20', '20', bobProof), 'MINT_COUNT_REACHED');
+      await lobsterMinter.claim(bob, '20', '10', bobProof);
+      await lobsterMinter.claim(dan, '30', '30', danProof);
+
+      assert.equal(await lobstersNft.totalSupply(), '610');
+    });
+  });
+
+  describe('mint by collection allowed', () => {
+    let treeArr, treeRoot;
+
+    let allowedCollection, otherCollection;
+    beforeEach(async () => {
+      allowedCollection = await MockERC721.new('ALLOWED', 'ALLOWED');
+      otherCollection = await MockERC721.new('OTHER', 'OTHER');
+
+      lobstersNft = await LobstersNft.new(
+        'LOBSTERS',
+        'LOBSTERS',
+        '610',
+        linkToken.address,
+        chainLinkCoordinator.address,
+        linkFeeAmount,
+        '0x'
+      );
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [allowedCollection.address], ['4']);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
+
+      treeArr = [{address: alice, count: 10}, {address: bob, count: 10}, {address: dan, count: 10}];
+      treeRoot = treeHelper.getTreeRoot(treeArr);
+      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      await lobsterMinter.claim(dan, '10', '10', treeHelper.getTreeLeafProof(treeArr, dan));
+
+      await allowedCollection.mint(alice, '1');
+      await allowedCollection.mint(alice, '2');
+      await allowedCollection.mint(bob, '3');
+      await allowedCollection.mint(bob, '4');
+      await allowedCollection.mint(bob, '5');
+
+      await otherCollection.mint(alice, '1');
+      await otherCollection.mint(alice, '2');
+    });
+
+    it('other seed with metadata should work properly', async () => {
+      assert.equal(await lobsterMinter.maxClaimAllowedByCollection(allowedCollection.address), '4');
+      assert.equal(await lobsterMinter.maxClaimAllowedByCollection(otherCollection.address), '0');
+
+      await expectRevert(lobstersNft.ownerOf('10'), 'nonexistent token');
+      assert.equal(await lobstersNft.totalSupply(), '10');
+
+      await lobsterMinter.claimByCollection(allowedCollection.address, ['1'], {from: alice});
+
+      assert.equal(await lobsterMinter.maxClaimAllowedByCollection(allowedCollection.address), '3');
+
+      assert.equal(await lobstersNft.ownerOf('10'), alice);
+      assert.equal(await lobstersNft.totalSupply(), '11');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['1'], {from: alice}), 'ALREADY_CLAIMED_BY_TOKEN');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['2'], {from: bob}), 'TOKEN_NOT_OWNED_BY_SENDER');
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['2', '3'], {from: bob}), 'TOKEN_NOT_OWNED_BY_SENDER');
+
+      await expectRevert(lobstersNft.ownerOf('11'), 'nonexistent token');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['1', '2'], {from: alice}), 'ALREADY_CLAIMED_BY_TOKEN');
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, [], {from: alice}), 'NULL_LENGTH');
+      await lobsterMinter.claimByCollection(allowedCollection.address, ['2'], {from: alice});
+
+      assert.equal(await lobsterMinter.maxClaimAllowedByCollection(allowedCollection.address), '2');
+
+      assert.equal(await lobstersNft.ownerOf('11'), alice);
+      assert.equal(await lobstersNft.totalSupply(), '12');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['2', '3'], {from: bob}), 'TOKEN_NOT_OWNED_BY_SENDER');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['3', '4', '5'], {from: bob}), 'SafeMath');
+
+      await expectRevert(lobstersNft.ownerOf('12'), 'nonexistent token');
+      await expectRevert(lobstersNft.ownerOf('13'), 'nonexistent token');
+
+      await lobsterMinter.claimByCollection(allowedCollection.address, ['3', '4'], {from: bob});
+
+      assert.equal(await lobsterMinter.maxClaimAllowedByCollection(allowedCollection.address), '0');
+
+      assert.equal(await lobstersNft.ownerOf('12'), bob);
+      assert.equal(await lobstersNft.ownerOf('13'), bob);
+      assert.equal(await lobstersNft.totalSupply(), '14');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['5'], {from: bob}), 'SafeMath');
+
+      await allowedCollection.mint(dan, '6');
+
+      await expectRevert(lobsterMinter.claimByCollection(allowedCollection.address, ['6'], {from: dan}), 'SafeMath');
+
+      await expectRevert(lobsterMinter.claimByCollection(otherCollection.address, ['1'], {from: alice}), 'SafeMath');
+
+      await lobsterMinter.claim(alice, '10', '10', treeHelper.getTreeLeafProof(treeArr, alice));
+
+      assert.equal(await lobstersNft.totalSupply(), '24');
+      assert.equal(await lobstersNft.ownerOf('14'), alice);
+    });
+  });
+
   describe('random metadataOf', function() {
     this.timeout(1000000);
 
@@ -260,7 +405,7 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x');
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
       await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       const addresses = [];
@@ -273,7 +418,7 @@ describe('LobstersNft', () => {
       treeRoot = treeHelper.getTreeRoot(treeArr);
       await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
 
-      await lobsterMinter.claim(addresses[0], countPerMember.toString(), treeHelper.getTreeLeafProof(treeArr, addresses[0]));
+      await lobsterMinter.claim(addresses[0], countPerMember.toString(), countPerMember.toString(), treeHelper.getTreeLeafProof(treeArr, addresses[0]));
     });
 
     it('seed with metadata should work properly', async function() {
@@ -294,7 +439,7 @@ describe('LobstersNft', () => {
     });
   });
 
-  describe('names claiming', () => {
+  describe.skip('names claiming', () => {
     let treeArr, treeRoot;
     beforeEach(async () => {
       lobstersNft = await LobstersNft.new(
@@ -306,7 +451,7 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x');
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
       await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 10}, {address: bob, count: 20}, {address: dan, count: 30}];
@@ -317,9 +462,9 @@ describe('LobstersNft', () => {
       const bobProof = treeHelper.getTreeLeafProof(treeArr, bob);
       const danProof = treeHelper.getTreeLeafProof(treeArr, dan);
 
-      await lobsterMinter.claim(alice, '10', aliceProof);
-      await lobsterMinter.claim(bob, '20', bobProof);
-      await lobsterMinter.claim(dan, '30', danProof);
+      await lobsterMinter.claim(alice, '10', '10', aliceProof);
+      await lobsterMinter.claim(bob, '20', '20', bobProof);
+      await lobsterMinter.claim(dan, '30', '30', danProof);
     });
 
     it('token name claim and update should work properly', async () => {
