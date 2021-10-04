@@ -11,7 +11,6 @@ import "./interfaces/ILobstersNft.sol";
 contract LobstersMinter is Ownable {
   using SafeMath for uint256;
 
-  event UpdateMerkleRoot(bytes32 merkleRoot);
   event SetMaxClaimAllowedByCollection(address collection, uint256 count);
   event Claim(address indexed account, uint256 count, uint256 mintCount);
   event ClaimByCollection(address indexed account, address indexed collection, uint256[] tokenIds, uint256 count);
@@ -39,11 +38,6 @@ contract LobstersMinter is Ownable {
       maxClaimAllowedByCollection[_allowedCollections[i]] = _allowedCollectionCounts[i];
       emit SetMaxClaimAllowedByCollection(_allowedCollections[i], _allowedCollectionCounts[i]);
     }
-  }
-
-  function updateMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-    merkleRoot = _merkleRoot;
-    emit UpdateMerkleRoot(_merkleRoot);
   }
 
   function encode(address _account, uint256 _count) public view returns (bytes memory) {
