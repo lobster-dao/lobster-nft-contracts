@@ -47,14 +47,10 @@ contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
 
   function mintMultiple(address _to, uint256 _count) external override onlyMinter {
     for (uint256 i = 0; i < _count; i++) {
-      this.mint(_to);
+      uint256 id = totalSupply();
+      require(id < maxTokens, "MAX_TOKENS");
+      _mint(_to, id);
     }
-  }
-
-  function mint(address _to) external override onlyMinter {
-    require(totalSupply() < maxTokens, "MAX_TOKENS");
-    uint256 id = totalSupply();
-    _mint(_to, id);
   }
 
   function setBaseURI(string memory baseURI_, bool finalBaseUri_) external onlyOwner {
@@ -112,7 +108,7 @@ contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
       randomIds[i] = i;
     }
 
-    for (uint256 i = 5; i < maxTokens - 1; i++) {
+    for (uint256 i = 0; i < maxTokens - 1; i++) {
       uint256 j = i + (uint256(keccak256(abi.encode(seed_, i))) % (maxTokens - i));
       (randomIds[i], randomIds[j]) = (randomIds[j], randomIds[i]);
     }

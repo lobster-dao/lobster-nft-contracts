@@ -74,6 +74,7 @@ contract LobstersMinter is Ownable {
     require(len > 0, "NULL_LENGTH");
 
     address sender = _msgSender();
+    uint256 mintCount = 0;
     for (uint256 i = 0; i < len; i++) {
       require(IERC721(_collection).ownerOf(_tokenIds[i]) == sender, "TOKEN_NOT_OWNED_BY_SENDER");
       require(!claimedByCollection[_collection][_tokenIds[i]], "ALREADY_CLAIMED_BY_TOKEN");
@@ -82,8 +83,10 @@ contract LobstersMinter is Ownable {
 
       maxClaimAllowedByCollection[_collection] = maxClaimAllowedByCollection[_collection].sub(1);
 
-      lobstersNft.mint(sender);
+      mintCount = mintCount.add(1);
     }
+
+    lobstersNft.mintMultiple(sender, mintCount);
 
     emit ClaimByCollection(sender, _collection, _tokenIds, len);
   }

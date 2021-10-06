@@ -55,7 +55,6 @@ describe('LobstersNft', () => {
     it('claim should work properly', async () => {
       await expectRevert(lobstersNft.setMinter(alice, {from: alice}), 'Ownable');
 
-      await expectRevert(lobstersNft.mint(minter, {from: alice}), 'NOT_THE_MINTER');
       await expectRevert(lobstersNft.mintMultiple(minter, '10', {from: alice}), 'NOT_THE_MINTER');
 
       const aliceProof = treeHelper.getTreeLeafProof(treeArr, alice);
@@ -106,7 +105,7 @@ describe('LobstersNft', () => {
       assert.equal(await lobstersNft.maxTokens(), '6');
 
       await lobstersNft.setMinter(minter, {from: minter});
-      await expectRevert(lobstersNft.mint(minter, {from: minter}), 'MAX_TOKENS');
+      await expectRevert(lobstersNft.mintMultiple(minter, '1', {from: minter}), 'MAX_TOKENS');
     });
   });
 
@@ -163,46 +162,45 @@ describe('LobstersNft', () => {
       await expectRevert(lobstersNft.seedReveal({from: minter}), 'SEED_ALREADY_GENERATED');
       await expectRevert(chainLinkCoordinator.sendRandom(lobstersNft.address, randomId), 'SEED_ALREADY_GENERATED');
 
-      assert.equal(await lobstersNft.metadataOf('0'), '40');
-      assert.equal(await lobstersNft.metadataOf('1'), '31');
-      assert.equal(await lobstersNft.metadataOf('2'), '56');
-      assert.equal(await lobstersNft.metadataOf('3'), '35');
-      assert.equal(await lobstersNft.metadataOf('4'), '53');
-      assert.equal(await lobstersNft.metadataOf('5'), '16');
-      assert.equal(await lobstersNft.metadataOf('6'), '19');
-      assert.equal(await lobstersNft.metadataOf('48'), '9');
-      assert.equal(await lobstersNft.metadataOf('49'), '50');
-      assert.equal(await lobstersNft.metadataOf('58'), '2');
-      assert.equal(await lobstersNft.metadataOf('59'), '11');
+      assert.equal(await lobstersNft.metadataOf('0'), '15');
+      assert.equal(await lobstersNft.metadataOf('1'), '58');
+      assert.equal(await lobstersNft.metadataOf('2'), '30');
+      assert.equal(await lobstersNft.metadataOf('3'), '29');
+      assert.equal(await lobstersNft.metadataOf('4'), '33');
+      assert.equal(await lobstersNft.metadataOf('5'), '5');
+      assert.equal(await lobstersNft.metadataOf('6'), '35');
+      assert.equal(await lobstersNft.metadataOf('7'), '22');
+      assert.equal(await lobstersNft.metadataOf('8'), '39');
+      assert.equal(await lobstersNft.metadataOf('9'), '26');
+      assert.equal(await lobstersNft.metadataOf('10'), '7');
+      assert.equal(await lobstersNft.metadataOf('48'), '47');
+      assert.equal(await lobstersNft.metadataOf('49'), '28');
+      assert.equal(await lobstersNft.metadataOf('58'), '51');
+      assert.equal(await lobstersNft.metadataOf('59'), '52');
 
       await expectRevert(lobstersNft.setBaseURI('https://site.com/', false, {from: alice}), 'Ownable');
       await lobstersNft.setBaseURI('https://site.com/', false, {from: minter});
       assert.equal(await lobstersNft.finalBaseURI(), false);
-      assert.equal(await lobstersNft.tokenURI('0'), 'https://site.com/40');
-      assert.equal(await lobstersNft.tokenURI('1'), 'https://site.com/31');
-      assert.equal(await lobstersNft.tokenURI('2'), 'https://site.com/56');
-      assert.equal(await lobstersNft.tokenURI('3'), 'https://site.com/35');
-      assert.equal(await lobstersNft.tokenURI('4'), 'https://site.com/53');
-      assert.equal(await lobstersNft.tokenURI('5'), 'https://site.com/16');
-      assert.equal(await lobstersNft.tokenURI('6'), 'https://site.com/19');
-      assert.equal(await lobstersNft.tokenURI('48'), 'https://site.com/9');
-      assert.equal(await lobstersNft.tokenURI('49'), 'https://site.com/50');
-      assert.equal(await lobstersNft.tokenURI('58'), 'https://site.com/2');
-      assert.equal(await lobstersNft.tokenURI('59'), 'https://site.com/11');
+      assert.equal(await lobstersNft.tokenURI('0'), 'https://site.com/15');
+      assert.equal(await lobstersNft.tokenURI('1'), 'https://site.com/58');
+      assert.equal(await lobstersNft.tokenURI('2'), 'https://site.com/30');
+      assert.equal(await lobstersNft.tokenURI('3'), 'https://site.com/29');
+      assert.equal(await lobstersNft.tokenURI('4'), 'https://site.com/33');
+      assert.equal(await lobstersNft.tokenURI('5'), 'https://site.com/5');
+      assert.equal(await lobstersNft.tokenURI('6'), 'https://site.com/35');
+      assert.equal(await lobstersNft.tokenURI('7'), 'https://site.com/22');
+      assert.equal(await lobstersNft.tokenURI('8'), 'https://site.com/39');
+      assert.equal(await lobstersNft.tokenURI('9'), 'https://site.com/26');
+      assert.equal(await lobstersNft.tokenURI('10'), 'https://site.com/7');
+      assert.equal(await lobstersNft.tokenURI('48'), 'https://site.com/47');
+      assert.equal(await lobstersNft.tokenURI('49'), 'https://site.com/28');
+      assert.equal(await lobstersNft.tokenURI('58'), 'https://site.com/51');
+      assert.equal(await lobstersNft.tokenURI('59'), 'https://site.com/52');
 
       await lobstersNft.setBaseURI('https://site2.com/', true, {from: minter});
       assert.equal(await lobstersNft.finalBaseURI(), true);
-      assert.equal(await lobstersNft.tokenURI('0'), 'https://site2.com/40');
-      assert.equal(await lobstersNft.tokenURI('1'), 'https://site2.com/31');
-      assert.equal(await lobstersNft.tokenURI('2'), 'https://site2.com/56');
-      assert.equal(await lobstersNft.tokenURI('3'), 'https://site2.com/35');
-      assert.equal(await lobstersNft.tokenURI('4'), 'https://site2.com/53');
-      assert.equal(await lobstersNft.tokenURI('5'), 'https://site2.com/16');
-      assert.equal(await lobstersNft.tokenURI('6'), 'https://site2.com/19');
-      assert.equal(await lobstersNft.tokenURI('48'), 'https://site2.com/9');
-      assert.equal(await lobstersNft.tokenURI('49'), 'https://site2.com/50');
-      assert.equal(await lobstersNft.tokenURI('58'), 'https://site2.com/2');
-      assert.equal(await lobstersNft.tokenURI('59'), 'https://site2.com/11');
+      assert.equal(await lobstersNft.tokenURI('0'), 'https://site2.com/15');
+      assert.equal(await lobstersNft.tokenURI('59'), 'https://site2.com/52');
 
       await expectRevert(lobstersNft.setBaseURI('https://site2.com/', false), 'BASE_URI_ALREADY_FINAL');
       await expectRevert(lobstersNft.setBaseURI('https://site2.com/', true), 'BASE_URI_ALREADY_FINAL');
@@ -225,20 +223,24 @@ describe('LobstersNft', () => {
       await chainLinkCoordinator.sendRandom(lobstersNft.address, randomId);
       assert.equal(await lobstersNft.seed(), randomId);
 
-      assert.equal(await lobstersNft.metadataOf('1'), '6');
-      assert.equal(await lobstersNft.metadataOf('2'), '18');
-      assert.equal(await lobstersNft.metadataOf('3'), '7');
-      assert.equal(await lobstersNft.metadataOf('4'), '51');
-      assert.equal(await lobstersNft.metadataOf('5'), '9');
-      assert.equal(await lobstersNft.metadataOf('6'), '3');
-      assert.equal(await lobstersNft.metadataOf('58'), '1');
-      assert.equal(await lobstersNft.metadataOf('59'), '8');
+      assert.equal(await lobstersNft.metadataOf('1'), '49');
+      assert.equal(await lobstersNft.metadataOf('2'), '14');
+      assert.equal(await lobstersNft.metadataOf('3'), '39');
+      assert.equal(await lobstersNft.metadataOf('4'), '56');
+      assert.equal(await lobstersNft.metadataOf('5'), '19');
+      assert.equal(await lobstersNft.metadataOf('6'), '0');
+      assert.equal(await lobstersNft.metadataOf('7'), '41');
+      assert.equal(await lobstersNft.metadataOf('8'), '37');
+      assert.equal(await lobstersNft.metadataOf('9'), '33');
+      assert.equal(await lobstersNft.metadataOf('10'), '59');
+      assert.equal(await lobstersNft.metadataOf('58'), '47');
+      assert.equal(await lobstersNft.metadataOf('59'), '53');
 
       await lobstersNft.setBaseURI('https://site.com/', {from: minter});
-      assert.equal(await lobstersNft.tokenURI('5'), 'https://site.com/9');
-      assert.equal(await lobstersNft.tokenURI('6'), 'https://site.com/3');
-      assert.equal(await lobstersNft.tokenURI('58'), 'https://site.com/1');
-      assert.equal(await lobstersNft.tokenURI('59'), 'https://site.com/8');
+      assert.equal(await lobstersNft.tokenURI('5'), 'https://site.com/19');
+      assert.equal(await lobstersNft.tokenURI('6'), 'https://site.com/0');
+      assert.equal(await lobstersNft.tokenURI('58'), 'https://site.com/47');
+      assert.equal(await lobstersNft.tokenURI('59'), 'https://site.com/53');
     });
   });
 
