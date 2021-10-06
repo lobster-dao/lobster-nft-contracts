@@ -1,6 +1,5 @@
 require('@nomiclabs/hardhat-truffle5');
 const fs = require('fs');
-const treeHelper = require('../helpers/tree');
 
 // eslint-disable-next-line
 task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {network}) => {
@@ -46,13 +45,12 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {net
     console.log('seed after', i + 1, 'minutes:', await lobstersNft.contract.methods.seed().call());
   }
 
-  const lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x');
+  const treeData = JSON.parse(fs.readFileSync('./data/export.json', {encoding: 'utf8'}));
+
+  const lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeData.treeRoot, [], []);
   await lobstersNft.setMinter(lobsterMinter.address, {from: deployer});
   console.log('lobstersNft.address', lobstersNft.address);
-
-  const treeArr = JSON.parse(fs.readFileSync('./data/mints.json', {encoding: 'utf8'}));
-  const treeRoot = treeHelper.getTreeRoot(treeArr);
-  await lobsterMinter.updateMerkleRoot(treeRoot, {from: deployer});
+  console.log('lobsterMinter.address', lobsterMinter.address);
 
   if (network.name === 'mainnet') {
     return;
@@ -60,15 +58,14 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {net
 
   let totalCount = 0;
   for (let i = 0; i < 1; i++) {
-    const {address, count} = treeArr[i];
+    const {address, count, proof} = treeData.treeLeaves[i];
     totalCount += count;
-    const addressProof = treeHelper.getTreeLeafProof(treeArr, address);
-    console.log('verifyClaim', await lobsterMinter.verifyClaim(address, count.toString(), addressProof));
-    await lobsterMinter.claim(address, count.toString(), addressProof);
+    console.log('verifyClaim', await lobsterMinter.verifyClaim(address, count.toString(), proof));
+    // await lobsterMinter.claim(address, count.toString(), proof);
   }
-  console.log('maxTokens', await lobstersNft.contract.methods.maxTokens().call());
+  console.log('maxTokens', totalCount);
 
-  for (let i = 0; i < totalCount; i++) {
-    console.log(i, 'metadata', await lobstersNft.contract.methods.metadataOf(i.toString()).call());
-  }
+  // for (let i = 0; i < totalCount; i++) {
+  //   console.log(i, 'metadata', await lobstersNft.contract.methods.metadataOf(i.toString()).call());
+  // }
 });

@@ -44,17 +44,16 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
-      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 1}, {address: bob, count: 2}, {address: dan, count: 3}];
       treeRoot = treeHelper.getTreeRoot(treeArr);
-      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeRoot, [], []);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
     });
 
     it('claim should work properly', async () => {
       await expectRevert(lobstersNft.setMinter(alice, {from: alice}), 'Ownable');
-      await expectRevert(lobsterMinter.updateMerkleRoot(treeRoot, {from: alice}), 'Ownable');
 
       await expectRevert(lobstersNft.mint(minter, {from: alice}), 'NOT_THE_MINTER');
       await expectRevert(lobstersNft.mintMultiple(minter, '10', {from: alice}), 'NOT_THE_MINTER');
@@ -123,12 +122,12 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
-      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 10}, {address: bob, count: 20}, {address: dan, count: 30}];
       treeRoot = treeHelper.getTreeRoot(treeArr);
-      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeRoot, [], []);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       const aliceProof = treeHelper.getTreeLeafProof(treeArr, alice);
       const bobProof = treeHelper.getTreeLeafProof(treeArr, bob);
@@ -255,12 +254,12 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
-      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 560}, {address: bob, count: 20}, {address: dan, count: 30}];
       treeRoot = treeHelper.getTreeRoot(treeArr);
-      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeRoot, [], []);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
     });
 
     it('other seed with metadata should work properly', async () => {
@@ -308,12 +307,12 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [allowedCollection.address], ['4']);
-      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 10}, {address: bob, count: 10}, {address: dan, count: 10}];
       treeRoot = treeHelper.getTreeRoot(treeArr);
-      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeRoot, [allowedCollection.address], ['4']);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       await lobsterMinter.claim(dan, '10', '10', treeHelper.getTreeLeafProof(treeArr, dan));
 
@@ -405,8 +404,6 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
-      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       const addresses = [];
       for(let i = 1; i <= members; i++) {
@@ -416,7 +413,9 @@ describe('LobstersNft', () => {
       treeArr = addresses.map(address => ({address, count: countPerMember}));
 
       treeRoot = treeHelper.getTreeRoot(treeArr);
-      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeRoot, [], []);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       await lobsterMinter.claim(addresses[0], countPerMember.toString(), countPerMember.toString(), treeHelper.getTreeLeafProof(treeArr, addresses[0]));
     });
@@ -451,12 +450,12 @@ describe('LobstersNft', () => {
         linkFeeAmount,
         '0x'
       );
-      lobsterMinter = await LobstersMinter.new(lobstersNft.address, '0x', [], []);
-      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       treeArr = [{address: alice, count: 10}, {address: bob, count: 20}, {address: dan, count: 30}];
       treeRoot = treeHelper.getTreeRoot(treeArr);
-      await lobsterMinter.updateMerkleRoot(treeRoot, {from: minter});
+
+      lobsterMinter = await LobstersMinter.new(lobstersNft.address, treeRoot, [], []);
+      await lobstersNft.setMinter(lobsterMinter.address, {from: minter});
 
       const aliceProof = treeHelper.getTreeLeafProof(treeArr, alice);
       const bobProof = treeHelper.getTreeLeafProof(treeArr, bob);
