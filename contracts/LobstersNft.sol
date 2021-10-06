@@ -47,13 +47,13 @@ contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
 
   function mintMultiple(address _to, uint256 _count) external override onlyMinter {
     for (uint256 i = 0; i < _count; i++) {
-      mint(_to);
+      this.mint(_to);
     }
   }
 
   function mint(address _to) external override onlyMinter {
     require(totalSupply() < maxTokens, "MAX_TOKENS");
-    id = totalSupply();
+    uint256 id = totalSupply();
     _mint(_to, id);
   }
 
