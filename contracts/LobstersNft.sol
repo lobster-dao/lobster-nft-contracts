@@ -12,7 +12,7 @@ import "./interfaces/ILobstersNft.sol";
 contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
   event SetBaseURI(string indexed baseURI);
   event SetDefaultURI(string indexed defaultURI);
-  event SetMinter(address minter);
+  event SetMinter(address indexed minter);
   event SetChainlinkConfig(uint256 chainlinkFee, bytes32 chainlinkHash);
   event SetRandomSeed(uint256 seed, bytes32 requestId);
 
@@ -47,13 +47,13 @@ contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
 
   function mintMultiple(address _to, uint256 _count) external override onlyMinter {
     for (uint256 i = 0; i < _count; i++) {
-      mint(_to);
+      this.mint(_to);
     }
   }
 
-  function mint(address _to) public override onlyMinter returns (uint256 id) {
+  function mint(address _to) external override onlyMinter {
     require(totalSupply() < maxTokens, "MAX_TOKENS");
-    id = totalSupply();
+    uint256 id = totalSupply();
     _mint(_to, id);
   }
 
@@ -112,8 +112,8 @@ contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
       randomIds[i] = i;
     }
 
-    for (uint256 i = 0; i < maxTokens - 1; i++) {
-      uint256 j = (uint256(keccak256(abi.encode(seed_, i))) % (maxTokens - 5)) + 5;
+    for (uint256 i = 5; i < maxTokens - 1; i++) {
+      uint256 j = i + (uint256(keccak256(abi.encode(seed_, i))) % (maxTokens - i));
       (randomIds[i], randomIds[j]) = (randomIds[j], randomIds[i]);
     }
 
