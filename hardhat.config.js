@@ -65,6 +65,12 @@ const config = {
       gasPrice: 1e9,
       gasMultiplier: 2,
     },
+    rinkeby: {
+      url: 'https://eth-rinkeby.alchemyapi.io/v2/W9wVuXYDjzn70tRBiHtDey4oKOMezvs-',
+      accounts: getAccounts('rinkeby'),
+      gasPrice: 1e9,
+      gasMultiplier: 2,
+    },
     coverage: {
       url: 'http://127.0.0.1:8555',
     },
@@ -73,7 +79,7 @@ const config = {
     artifacts: './artifacts',
     cache: './cache',
     coverage: './coverage',
-    coverageJson: './coverage.json',
+    coverageJson: './coverage.metadata',
     root: './',
     sources: process.env.SOURCES ? './' + process.env.SOURCES : './contracts',
     tests: './test',

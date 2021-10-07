@@ -13,11 +13,18 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {net
   console.log('deployer', deployer);
   const sendOptions = { from: deployer };
 
-  const linkAddress = '0xa36085F69e2889c224210F603D836748e7dC0088';
+  // kovan:
+  // const linkAddress = '0xa36085F69e2889c224210F603D836748e7dC0088';
+  // const vrfCoordinatorAddress = '0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9';
+  // const chainlinkKeyhash = '0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4';
+
+  // rinkeby:
+  const linkAddress = '0x01BE23585060835E02B77ef475b0Cc51aA1e0709';
+  const vrfCoordinatorAddress = '0xb3dccb4cf7a26f6cf6b120cf5a73875b7bbc655b';
+  const chainlinkKeyhash = '0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311';
+
   const linkFee = web3.utils.toWei('0.1', 'ether');
-  const vrfCoordinatorAddress = '0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9';
-  const chainlinkKeyhash = '0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4';
-  const maxTokens = '10000';
+  const maxTokens = '6751';
 
   const linkToken = await ERC20.at(linkAddress);
 
@@ -35,6 +42,7 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {net
   await linkToken.transfer(lobstersNft.address, linkFee, sendOptions);
 
   await lobstersNft.seedReveal(sendOptions);
+  await lobstersNft.setBaseURI('ipfs://bafybeigktkztk4iovkljhxk74rucfwitajnwleebzbvk34hdeqhsppnnty/', false);
 
   console.log('seed:', await lobstersNft.contract.methods.seed().call());
 
@@ -57,15 +65,12 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {net
   }
 
   let totalCount = 0;
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 2; i++) {
     const {address, count, proof} = treeData.treeLeaves[i];
     totalCount += count;
+    console.log('address', address);
     console.log('verifyClaim', await lobsterMinter.verifyClaim(address, count.toString(), proof));
-    // await lobsterMinter.claim(address, count.toString(), proof);
+    await lobsterMinter.claim(address, count.toString(), proof);
   }
-  console.log('maxTokens', totalCount);
-
-  // for (let i = 0; i < totalCount; i++) {
-  //   console.log(i, 'metadata', await lobstersNft.contract.methods.metadataOf(i.toString()).call());
-  // }
+  console.log('mintedCount', totalCount);
 });
