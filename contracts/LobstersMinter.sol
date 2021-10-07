@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./interfaces/ILobstersNft.sol";
+import "./interfaces/ICryptoPunks.sol";
 
 contract LobstersMinter is Ownable {
   using SafeMath for uint256;
@@ -22,6 +23,8 @@ contract LobstersMinter is Ownable {
 
   mapping(address => uint256) public maxClaimAllowedByCollection;
   mapping(address => mapping(uint256 => bool)) public claimedByCollection;
+
+  address public constant PUNK_COLLECTION = 0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb;
 
   constructor(
     address _lobstersNft,
@@ -76,7 +79,11 @@ contract LobstersMinter is Ownable {
     address sender = _msgSender();
     uint256 mintCount = 0;
     for (uint256 i = 0; i < len; i++) {
-      require(IERC721(_collection).ownerOf(_tokenIds[i]) == sender, "TOKEN_NOT_OWNED_BY_SENDER");
+      if (_collection == PUNK_COLLECTION) {
+        require(ICryptoPunks(_collection).punkIndexToAddress(_tokenIds[i]) == sender, "TOKEN_NOT_OWNED_BY_SENDER");
+      } else {
+        require(IERC721(_collection).ownerOf(_tokenIds[i]) == sender, "TOKEN_NOT_OWNED_BY_SENDER");
+      }
       require(!claimedByCollection[_collection][_tokenIds[i]], "ALREADY_CLAIMED_BY_TOKEN");
 
       claimedByCollection[_collection][_tokenIds[i]] = true;

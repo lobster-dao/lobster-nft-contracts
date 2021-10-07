@@ -39,6 +39,13 @@ module.exports = (web3, ethers) => {
       await ethers.provider.send('hardhat_impersonateAccount', [adminAddress]);
     },
 
+    callContract(contract, method, args = []) {
+      if (contract.contract) {
+        contract = contract.contract;
+      }
+      return contract.methods[method].apply(args, contract).call();
+    },
+
     async getTimestamp(shift = 0) {
       const currentTimestamp = (await web3.eth.getBlock(await web3.eth.getBlockNumber())).timestamp;
       return currentTimestamp + shift;

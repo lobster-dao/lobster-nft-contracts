@@ -48,6 +48,7 @@ const config = {
       gasPrice: 100 * 1e9,
       gasMultiplier: 1.2,
       timeout: 2000000,
+      chainId: 1,
     },
     mainnetfork: {
       url: 'http://127.0.0.1:8545/',
