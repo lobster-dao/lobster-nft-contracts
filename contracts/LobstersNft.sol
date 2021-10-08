@@ -66,6 +66,7 @@ contract LobstersNft is ILobstersNft, Ownable, ERC721, VRFConsumerBase {
   }
 
   function setMinter(address _minter) external onlyOwner {
+    require(minter == address(0), "MINTER_ALREADY_SET");
     minter = _minter;
     emit SetMinter(_minter);
   }

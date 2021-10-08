@@ -54,6 +54,7 @@ describe('LobstersNft', () => {
 
     it('claim should work properly', async () => {
       await expectRevert(lobstersNft.setMinter(alice, {from: alice}), 'Ownable');
+      await expectRevert(lobstersNft.setMinter(alice, {from: minter}), 'MINTER_ALREADY_SET');
 
       await expectRevert(lobstersNft.mintMultiple(minter, '10', {from: alice}), 'NOT_THE_MINTER');
 
@@ -103,9 +104,6 @@ describe('LobstersNft', () => {
 
       assert.equal(await lobstersNft.totalSupply(), '6');
       assert.equal(await lobstersNft.maxTokens(), '6');
-
-      await lobstersNft.setMinter(minter, {from: minter});
-      await expectRevert(lobstersNft.mintMultiple(minter, '1', {from: minter}), 'MAX_TOKENS');
     });
   });
 
