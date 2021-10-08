@@ -1,6 +1,6 @@
 const BigNumber = require('bignumber.js')
 
-module.exports = (web3, ethers) => {
+module.exports = (ethers) => {
   const {toBN, toWei, fromWei} = web3.utils;
 
   function nToBN(num) {

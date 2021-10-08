@@ -24,7 +24,7 @@ contract LobstersMinter is Ownable {
   mapping(address => uint256) public maxClaimAllowedByCollection;
   mapping(address => mapping(uint256 => bool)) public claimedByCollection;
 
-  address public constant PUNK_COLLECTION = 0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb;
+  address public constant PUNK_COLLECTION = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
 
   constructor(
     address _lobstersNft,
