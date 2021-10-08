@@ -8,12 +8,9 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {eth
   const LobstersMinter = await ethers.getContractFactory('LobstersMinter');
 
   const [deployer] = await ethers.getSigners().then(signers => signers.map(s => s.address));
+
   console.log('deployer', deployer);
-  const sendOptions = {
-    // from: deployer,
-    // maxFeePerGas: '0x' + web3.utils.toBN(150e9.toString()).toString('hex'),
-    // maxPriorityFeePerGas: '0x' + web3.utils.toBN(1e9.toString()).toString('hex')
-  };
+  const sendOptions = {};
 
   const {impersonateAccount} = require('../helpers')(ethers);
 
@@ -34,15 +31,20 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {eth
 
   // return console.log('getBalance', ethers.utils.formatEther(await ethers.provider.getBalance(deployer)));
 
-  const linkFee = ethers.utils.parseEther('2');
+  let linkFee;
+  if (network.name === 'rinkeby') {
+    linkFee = ethers.utils.parseEther('0.1');
+  } else {
+    linkFee = ethers.utils.parseEther('2');
+  }
   const maxTokens = '6751';
 
   const linkToken = await ethers.getContractAt('IERC20', linkAddress);
   console.log('linkToken.address', linkToken.address, 'linkFee', linkFee);
 
   const lobstersNft = await LobstersNft.deploy(
-    'LOBSTERS',
-    'LOBSTERS',
+    'lobsterdao',
+    'LOBS',
     maxTokens,
     linkAddress,
     vrfCoordinatorAddress,
@@ -52,16 +54,8 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {eth
   );
   console.log('lobstersNft.address', lobstersNft.address);
 
-  if (network.name === 'mainnetfork') {
-    const linkHolder = '0xbe6977e08d4479c0a6777539ae0e8fa27be4e9d6';
-    await impersonateAccount(linkHolder);
-    await linkToken.connect(await ethers.provider.getSigner(linkHolder)).transfer(deployer, linkFee, {from: linkHolder});
-  }
-
-  await linkToken.transfer(lobstersNft.address, linkFee, sendOptions);
-  console.log('linkToken.transfer success')
-
-  await lobstersNft.setBaseURI('ipfs://bafybeigktkztk4iovkljhxk74rucfwitajnwleebzbvk34hdeqhsppnnty/', false);
+  await lobstersNft.setDefaultURI('ipfs://bafkreig3rvuwgsci7qkj32asqr6m2kumtvzx5w4cvhxl2riz3cl2hqfrgm');
+  await lobstersNft.setBaseURI('ipfs://bafybeihg7s73hxgihfzz6ok5y7ybcx4lvhub43qc5grk4iyk4kptys63d4/', false);
 
   const treeData = JSON.parse(fs.readFileSync('./data/export.json', {encoding: 'utf8'}));
 
@@ -86,11 +80,21 @@ task('deploy-minter-and-nft', 'Deploy Minter and NFT').setAction(async (__, {eth
   console.log('lobstersNft.address', lobstersNft.address);
   console.log('lobsterMinter.address', lobsterMinter.address);
 
-  await lobstersNft.transferOwnership('0x7BAFC0D5c5892f2041FD9F2415A7611042218e22');
-
   if (network.name === 'mainnet') {
+    await lobstersNft.transferOwnership('0x7BAFC0D5c5892f2041FD9F2415A7611042218e22');
     return;
   }
+
+  if (network.name === 'mainnetfork') {
+    const linkHolder = '0xbe6977e08d4479c0a6777539ae0e8fa27be4e9d6';
+    await impersonateAccount(linkHolder);
+    await linkToken.connect(await ethers.provider.getSigner(linkHolder)).transfer(deployer, linkFee, {from: linkHolder});
+  }
+
+  await linkToken.transfer(lobstersNft.address, linkFee, sendOptions);
+  await new Promise((r) => setTimeout(r, 1000 * 120));
+  console.log('linkToken.transfer success');
+  await lobstersNft.seedReveal(sendOptions);
 
   const testAcc = '0x69021ae8769586d56791d29615959997c2012b99';
   await impersonateAccount(testAcc);

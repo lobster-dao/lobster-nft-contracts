@@ -159,6 +159,10 @@ describe('LobstersNft', () => {
       await chainLinkCoordinator.sendRandom(lobstersNft.address, randomId);
       assert.equal(await lobstersNft.seed(), randomId);
 
+      assert.equal(await lobstersNft.tokenURI('1'), 'default.site');
+      await lobstersNft.setBaseURI('', false, {from: minter});
+      assert.equal(await lobstersNft.tokenURI('1'), 'default.site');
+
       await expectRevert(lobstersNft.seedReveal({from: minter}), 'SEED_ALREADY_GENERATED');
       await expectRevert(chainLinkCoordinator.sendRandom(lobstersNft.address, randomId), 'SEED_ALREADY_GENERATED');
 
